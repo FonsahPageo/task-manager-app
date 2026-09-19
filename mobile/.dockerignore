@@ -1,0 +1,8 @@
+build/
+.dart_tool/
+.packages
+pubspec.lock
+.git/
+.idea/
+*.log
+mobile/build/

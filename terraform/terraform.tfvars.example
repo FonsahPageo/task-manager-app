@@ -1,0 +1,14 @@
+aws_region  = ""
+project     = ""
+environment = ""
+
+instance_type = ""
+key_name      = ""
+
+allowed_ssh_cidrs = []
+allowed_http_cidr = ""
+
+create_rds  = false
+db_name     = ""
+db_username = ""
+db_password = ""
