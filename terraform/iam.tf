@@ -20,6 +20,12 @@ resource "aws_iam_role_policy_attachment" "host_ecr_read" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
+# Jenkins runs on the same host and pushes images to ECR.
+resource "aws_iam_role_policy_attachment" "host_ecr_write" {
+  role       = aws_iam_role.host.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+}
+
 resource "aws_iam_role_policy_attachment" "host_ssm" {
   role       = aws_iam_role.host.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"

@@ -12,8 +12,8 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
 
   frontend:
     image: ${FRONTEND_IMAGE}

@@ -99,6 +99,16 @@ resource "aws_security_group" "app" {
     }
   }
 
+  # Jenkins runs on this same host and deploys by SSHing to itself (EC2_HOST
+  # is the private IP), so allow SSH from the app security group to itself.
+  ingress {
+    description = "SSH from the app host itself (Jenkins on the same instance)"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    self        = true
+  }
+
   ingress {
     description = "HTTP"
     from_port   = 80
