@@ -26,6 +26,25 @@ resource "aws_iam_role_policy_attachment" "host_ecr_write" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
 }
 
+# PowerUser does not cover lifecycle policies, which the Jenkinsfile manages.
+resource "aws_iam_role_policy" "host_ecr_lifecycle" {
+  name = "ecr-lifecycle"
+  role = aws_iam_role.host.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "ecr:PutLifecyclePolicy",
+        "ecr:GetLifecyclePolicy",
+        "ecr:DeleteLifecyclePolicy",
+      ]
+      Resource = "*"
+    }]
+  })
+}
+
 resource "aws_iam_role_policy_attachment" "host_ssm" {
   role       = aws_iam_role.host.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"

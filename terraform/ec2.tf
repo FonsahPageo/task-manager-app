@@ -43,14 +43,17 @@ resource "local_file" "host_private_key" {
 }
 
 resource "aws_instance" "app" {
-  ami                         = data.aws_ami.ubuntu.id
-  instance_type               = var.instance_type
-  subnet_id                   = aws_subnet.public[0].id
-  vpc_security_group_ids      = [aws_security_group.app.id]
-  iam_instance_profile        = aws_iam_instance_profile.host.name
-  key_name                    = local.key_name
-  user_data                   = file("${path.module}/user_data.sh")
-  user_data_replace_on_change = true
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.public[0].id
+  vpc_security_group_ids = [aws_security_group.app.id]
+  iam_instance_profile   = aws_iam_instance_profile.host.name
+  key_name               = local.key_name
+  user_data              = file("${path.module}/user_data.sh")
+  # Do NOT rebuild the instance just because user_data.sh changed: Jenkins and
+  # its jobs live on the host and a rebuild wipes them. Rebuild deliberately
+  # by passing -replace=aws_instance.app.
+  user_data_replace_on_change = false
 
   metadata_options {
     http_endpoint = "enabled"

@@ -26,6 +26,8 @@ pipeline {
             description: 'SSH user on the EC2 host')
         string(name: 'APP_DIR', defaultValue: '/opt/taskmanager',
             description: 'Directory on the EC2 host that holds the Compose file and .env')
+        string(name: 'APP_CORS_ALLOWED_ORIGINS', defaultValue: 'https://fonsah-task-manager.web.app',
+            description: 'Comma-separated browser origins allowed to call the API (CORS)')
         booleanParam(
             name: 'USE_BUNDLED_DB',
             defaultValue: false,
@@ -162,6 +164,7 @@ pipeline {
                             printf 'DB_USERNAME=%s\\n'     "$DB_USERNAME"
                             printf 'DB_PASSWORD=%s\\n'     "$DB_PASSWORD"
                             printf 'JWT_SECRET=%s\\n'      "$JWT_SECRET"
+                            printf 'APP_CORS_ALLOWED_ORIGINS=%s\\n' "$APP_CORS_ALLOWED_ORIGINS"
                         } > .env.deploy
                         scp $SSH_OPTS .env.deploy "$REMOTE:$APP_DIR/.env"
                         rm -f .env.deploy

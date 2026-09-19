@@ -42,3 +42,8 @@ output "rds_endpoint" {
   description = "RDS endpoint address when create_rds is enabled."
   value       = var.create_rds ? aws_db_instance.main[0].address : null
 }
+
+output "cloudfront_domain" {
+  description = "HTTPS API endpoint; set VITE_API_BASE_URL to https://<this>/api when serving the frontend from Firebase Hosting."
+  value       = aws_cloudfront_distribution.app.domain_name
+}

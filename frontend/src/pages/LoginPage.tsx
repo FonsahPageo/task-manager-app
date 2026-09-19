@@ -122,10 +122,10 @@ export default function LoginPage() {
 
           <div className="mt-5 flex items-start gap-2 rounded-lg bg-emerald-50 px-3 py-2.5 text-xs text-emerald-800">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
-            <span>
+            {/* <span>
               Demo account: <code className="font-semibold">demo@example.com</code> /{' '}
               <code className="font-semibold">password123</code>
-            </span>
+            </span> */}
           </div>
 
           <p className="mt-5 text-center text-sm text-slate-500">
