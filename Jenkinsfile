@@ -51,8 +51,7 @@ pipeline {
             }
         }
 
-        stage('Build & test') {
-            stage('Backend — mvn verify') {
+        stage('Backend — mvn verify') {
                 steps {
                     dir('backend') {
                         sh 'mvn -B -ntp verify'
@@ -79,7 +78,6 @@ pipeline {
                     }
                 }
             }
-        }
 
         stage('Build & push images to ECR') {
             when {
