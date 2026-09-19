@@ -1,6 +1,6 @@
 # Task Manager
 
-Ths is a small full-stack app for keeping track of personal tasks. It has a Spring Boot API, a React web client, and an optional Flutter mobile client. All three clients use the same JWT-authenticated  backend.
+This is a small full-stack app for keeping track of personal tasks. It has a Spring Boot API, a React web client, and an optional Flutter mobile client. All three clients use the same JWT-authenticated  backend.
 
 ## What it can do
 
@@ -14,7 +14,7 @@ Ths is a small full-stack app for keeping track of personal tasks. It has a Spri
 ## Requirements
 
 For local development you will need JDK 21 or newer, Maven 3.8 or newer,
-Node.js 18 or newer, and npm. MySQL 8 is only needed for the production-style
+Node.js 20 LTS or newer, and npm. MySQL 8 is only needed for the production-style
 profile. Flutter is required only if you want to run the mobile client.
 
 ## Run it locally
@@ -140,18 +140,64 @@ npm run build
 ```
 
 The `Jenkinsfile` at the repository root defines the pipeline. It runs backend
-verification (`mvn verify`) and the frontend build in parallel, then creates the
-ECR repositories if needed and pushes both Docker images on `main`. Deployment
-is off by default and runs only when the `DEPLOY` parameter is enabled on `main`;
-it copies `docker-compose.prod.yml` to an EC2 host and restarts the stack with
-the images that were just pushed. Set `USE_BUNDLED_DB` to also ship
-`docker-compose.db.yml`, which runs MySQL on the host instead of using RDS.
+verification (`mvn verify`) and the frontend build sequentially (serialized to
+fit the host's memory budget), then creates the ECR repositories if needed and
+pushes both Docker images when building `main`. Deployment is off by default and
+runs only when the `DEPLOY` parameter is enabled on `main`; it copies
+`docker-compose.prod.yml` to the EC2 host, writes the database, JWT, and CORS
+settings as `.env`, and restarts the stack with the images that were just pushed.
+Set `USE_BUNDLED_DB` to also ship `docker-compose.db.yml`, which runs MySQL on
+the host instead of using RDS.
 
-Create a Pipeline or Multibranch Pipeline job pointing at this repository, and
-make sure the agent provides JDK 21, Maven, Node 20, npm, Docker, and the AWS
-CLI with an IAM role that can push to ECR. The target EC2 instance needs an IAM
-role that can pull from ECR. Store the SSH key plus `DB_URL`, `DB_USERNAME`,
-`DB_PASSWORD`, and `JWT_SECRET` as Jenkins credentials before deploying.
+Create a Pipeline or Multibranch Pipeline job pointing at this repository. The
+EC2 application host provisions its own toolchain — Java 21, Maven, Node 20,
+Docker, the AWS CLI, and Jenkins itself — via `terraform/user_data.sh`, so build
+and deploy run on that single machine and its IAM role both pushes to and pulls
+from ECR. Before deploying, store these Jenkins credentials: an SSH key
+(`ec2-ssh-key`) for the target host, `taskmanager-db-url`,
+`taskmanager-db-username`, `taskmanager-db-password`, and
+`taskmanager-jwt-secret`. Set the `EC2_HOST` parameter to the host's **private**
+IP, since connecting to its public Elastic IP from within the VPC times out.
+
+## Deployment
+
+### Frontend on Firebase Hosting
+
+The web client is served by Firebase Hosting (project `fonsah-task-manager`) at
+<https://fonsah-task-manager.web.app>. `frontend/firebase.json` points Firebase
+at the built `frontend/dist` directory and rewrites every route to `index.html`
+so client-side routing works. The GitHub Actions workflows in `.github/workflows/`
+build the frontend (inside `frontend/`) and deploy it: to the live channel on
+every push to `main`, and to a preview channel on pull requests. To deploy
+manually:
+
+```bash
+cd frontend
+npm ci
+npm run build
+firebase deploy
+```
+
+### HTTPS API gateway via CloudFront
+
+The browser never talks to the EC2 host directly. It calls
+`https://d1uewestzg7jqn.cloudfront.net/api` — a CloudFront distribution
+(Terraform: `terraform/cloudfront.tf`, output `cloudfront_domain`) that proxies
+`/api` over HTTP to nginx on the EC2 app host, which forwards to the backend.
+The frontend bakes that URL into the production build through
+`frontend/.env.production`:
+
+```text
+VITE_API_BASE_URL=https://d1uewestzg7jqn.cloudfront.net/api
+```
+
+### CORS
+
+The backend only accepts browser requests whose `Origin` is listed in the
+`APP_CORS_ALLOWED_ORIGINS` environment variable (comma-separated). The deployed
+value must include the Firebase Hosting origin(s), e.g.
+`https://fonsah-task-manager.web.app`. It is a Jenkins pipeline parameter and is
+written to the container's `.env` during deployment.
 
 ## Configuration and security
 
@@ -195,3 +241,7 @@ repository URLs, the `database_url` for the `taskmanager-db-url` credential, and
 the Jenkins instance profile to attach to the Jenkins host. The bundled MySQL
 container is only used when `USE_BUNDLED_DB` is enabled; otherwise `DB_URL` must
 point at an external database such as RDS.
+
+The host's user data script (`terraform/user_data.sh`) installs the full build
+toolchain and Jenkins onto the app instance, and `terraform/cloudfront.tf`
+provisions the HTTPS API gateway described above.
