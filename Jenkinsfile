@@ -1,4 +1,5 @@
-// Recommended plugins: Pipeline, JDK Tool, NodeJS, JUnit, Credentials Binding, SSH Agent.
+// Recommended plugins: Pipeline, NodeJS, JUnit, Credentials Binding, SSH Agent.
+// Uses the agent's system Java 21, Maven and Node (no global tool installs required).
 
 pipeline {
     agent any
@@ -7,12 +8,6 @@ pipeline {
         timestamps()
         disableConcurrentBuilds()
         buildDiscarder(logRotator(numToKeepStr: '20'))
-    }
-
-    tools {
-        jdk 'jdk-21'
-        maven 'maven-3.9'
-        nodejs 'node-20'
     }
 
     parameters {
