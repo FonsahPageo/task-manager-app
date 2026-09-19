@@ -31,6 +31,14 @@ pipeline {
             defaultValue: false,
             description: 'Run the bundled MySQL container on the host instead of pointing DB_URL at RDS'
         )
+        string(
+            name: 'AWS_REGION', defaultValue: 'us-east-1',
+            description: 'AWS region that hosts the ECR repositories'
+        )
+    }
+
+    environment {
+        AWS_REGION = "${params.AWS_REGION}"
     }
 
     stages {
