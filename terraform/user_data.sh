@@ -8,6 +8,15 @@ apt-get update -y
 apt-get install -y docker.io git curl ca-certificates unzip ec2-instance-connect \
   openjdk-21-jdk-headless maven fontconfig
 
+# 2 GB swap so the Jenkins build, Docker and Jenkins itself do not OOM on a 2 GB instance
+if [ ! -f /swapfile ]; then
+  fallocate -l 4G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
+
 # AWS CLI v2 (Ubuntu 24.04 no longer packages awscli) for ECR login
 curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
 unzip -q /tmp/awscliv2.zip -d /tmp

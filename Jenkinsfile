@@ -1,6 +1,3 @@
-// Recommended plugins: Pipeline, NodeJS, JUnit, Credentials Binding, SSH Agent.
-// Uses the agent's system Java 21, Maven and Node (no global tool installs required).
-
 pipeline {
     agent any
 
@@ -41,6 +38,9 @@ pipeline {
 
     environment {
         AWS_REGION = "${params.AWS_REGION}"
+        MAVEN_OPTS = '-Xmx768m'
+        NODE_OPTIONS = '--max-old-space-size=768'
+        JAVA_TOOL_OPTIONS = '-XX:MaxRAMPercentage=50.0'
     }
 
     stages {
@@ -52,32 +52,30 @@ pipeline {
         }
 
         stage('Build & test') {
-            parallel {
-                stage('Backend — mvn verify') {
-                    steps {
-                        dir('backend') {
-                            sh 'mvn -B -ntp verify'
-                        }
-                    }
-                    post {
-                        always {
-                            junit allowEmptyResults: true,
-                                  testResults: 'backend/target/surefire-reports/*.xml'
-                        }
+            stage('Backend — mvn verify') {
+                steps {
+                    dir('backend') {
+                        sh 'mvn -B -ntp verify'
                     }
                 }
-
-                stage('Frontend — npm build') {
-                    steps {
-                        dir('frontend') {
-                            sh 'npm ci'
-                            sh 'npm run build'
-                        }
+                post {
+                    always {
+                        junit allowEmptyResults: true,
+                              testResults: 'backend/target/surefire-reports/*.xml'
                     }
-                    post {
-                        always {
-                            archiveArtifacts artifacts: 'frontend/dist/**', allowEmptyArchive: true
-                        }
+                }
+            }
+
+            stage('Frontend — npm build') {
+                steps {
+                    dir('frontend') {
+                        sh 'npm ci'
+                        sh 'npm run build'
+                    }
+                }
+                post {
+                    always {
+                        archiveArtifacts artifacts: 'frontend/dist/**', allowEmptyArchive: true
                     }
                 }
             }
